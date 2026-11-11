@@ -9,6 +9,9 @@ revision = os.environ['GITHUB_SHA']
 ftp = FTP_TLS(context=ssl.create_default_context(), timeout=180)
 try:
     ftp.connect(os.environ['FTP_HOST'], int(os.environ.get('FTP_PORT') or '21'))
+    # The provider's certificate uses its server name, while FTP_HOST is a hosted domain.
+    # Keep the original network endpoint and verify both TLS channels against that name.
+    ftp.host = os.environ.get('FTP_TLS_SERVER_NAME') or ftp.host
     ftp.login(os.environ['FTP_USERNAME'], os.environ['FTP_PASSWORD'])
     ftp.prot_p()
     ftp.cwd(os.environ.get('FTP_SERVER_DIR') or '/')

@@ -55,6 +55,7 @@ jobs:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_PORT: ${{ vars.FTP_PORT || '21' }}
+          FTP_TLS_SERVER_NAME: ${{ vars.FTP_TLS_SERVER_NAME || 'bdix4.ebnhost.com' }}
           FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR || '/' }}
       - name: Verify live release
         run: python3 deploy/check.py

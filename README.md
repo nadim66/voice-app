@@ -37,10 +37,11 @@ GitHub repository **Settings → Secrets and variables → Actions**:
 | Secret | `FTP_USERNAME` | New FTP account restricted to the application root |
 | Secret | `FTP_PASSWORD` | FTP account password |
 | Variable | `FTP_PORT` | `21` |
+| Variable | `FTP_TLS_SERVER_NAME` | `bdix4.ebnhost.com` (default; provider certificate name) |
 | Variable | `FTP_SERVER_DIR` | `/` |
 | Variable | `APP_URL` | `https://voice.mrctrading.com` |
 
-Use certificate-verified explicit FTPS. If certificate verification fails, ask the host for the FTP hostname matching its valid TLS certificate; do not disable verification.
+Use certificate-verified explicit FTPS. This host presents a valid certificate for `bdix4.ebnhost.com` on the `ftp.mrctrading.com` endpoint. `FTP_TLS_SERVER_NAME` controls TLS hostname verification without changing the network endpoint or disabling certificate verification. If the provider changes its certificate identity, update this variable to its confirmed FTPS server name.
 
 Create a cPanel Cron Job every minute (`* * * * *`):
 

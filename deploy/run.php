@@ -140,10 +140,14 @@ foreach ($pending as $manifestPath) {
         foreach (['APP_ENV' => 'production', 'APP_DEBUG' => 'false'] as $key => $value) {
             $contents = preg_replace('/^'.$key.'=.*$/m', $key.'='.$value, $contents);
         }
-        if (file_put_contents($environment, rtrim($contents)."\n", LOCK_EX) === false) {
+        $environmentTemporary = tempnam($root, '.env.deploy-');
+        if ($environmentTemporary === false || file_put_contents($environmentTemporary, rtrim($contents)."\n", LOCK_EX) === false) {
             throw new RuntimeException('Cannot update server .env.');
         }
-        chmod($environment, 0600);
+        chmod($environmentTemporary, 0600);
+        if (! rename($environmentTemporary, $environment)) {
+            throw new RuntimeException('Cannot save server .env.');
+        }
 
         foreach (['app/private', 'app/public', 'framework/cache/data', 'framework/sessions', 'framework/views', 'logs'] as $path) {
             directory($root.'/storage/'.$path, str_starts_with($path, 'app/private') ? 0700 : 0755);
@@ -167,7 +171,7 @@ foreach ($pending as $manifestPath) {
             }
         }
 
-        require_once $release.'/vendor/autoload.php';
+        artisan($release, ['--version']);
         if ($previous !== null) {
             artisan($root.'/current', ['down', '--retry=30']);
             $maintenance = true;
