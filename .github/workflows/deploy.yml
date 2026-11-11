@@ -1,0 +1,62 @@
+name: Test and deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: voice-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, curl, dom, fileinfo, intl, mbstring, pdo_mysql, pdo_sqlite, zip
+          coverage: none
+      - run: composer install --prefer-dist --no-interaction --no-progress
+      - run: cp .env.example .env && php artisan key:generate
+      - run: vendor/bin/pint --test
+      - run: php artisan test
+      - run: python3 -m py_compile deploy/package.py deploy/upload.py deploy/check.py
+      - run: php -l deploy/run.php
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, curl, dom, fileinfo, intl, mbstring, pdo_mysql, zip
+          coverage: none
+      - name: Install production dependencies
+        run: composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+      - name: Publish Filament assets
+        run: php artisan filament:assets
+      - name: Package release
+        run: python3 deploy/package.py
+      - name: Upload over explicit FTPS
+        run: python3 deploy/upload.py
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_PORT: ${{ vars.FTP_PORT || '21' }}
+          FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR || '/' }}
+      - name: Verify live release
+        run: python3 deploy/check.py
+        env:
+          APP_URL: ${{ vars.APP_URL || 'https://voice.mrctrading.com' }}
