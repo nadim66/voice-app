@@ -40,7 +40,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: bcmath, curl, dom, fileinfo, intl, mbstring, pdo_mysql, zip
+          extensions: bcmath, curl, dom, fileinfo, intl, mbstring, pdo_mysql, pdo_sqlite, zip
           coverage: none
       - name: Install production dependencies
         run: composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
@@ -48,7 +48,9 @@ jobs:
         run: php artisan filament:assets
       - name: Package release
         run: python3 deploy/package.py
-      - name: Upload over explicit FTPS
+      - name: Verify activation with process and symlink functions disabled
+        run: python3 tests/deployment_http.py -v
+      - name: Upload over FTPS and activate over HTTPS
         run: python3 deploy/upload.py
         env:
           FTP_HOST: ${{ secrets.FTP_HOST }}
@@ -57,6 +59,7 @@ jobs:
           FTP_PORT: ${{ vars.FTP_PORT || '21' }}
           FTP_TLS_SERVER_NAME: ${{ vars.FTP_TLS_SERVER_NAME || 'bdix4.ebnhost.com' }}
           FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR || '/' }}
+          APP_URL: ${{ vars.APP_URL || 'https://voice.mrctrading.com' }}
       - name: Verify live release
         run: python3 deploy/check.py
         env:

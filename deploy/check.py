@@ -9,7 +9,7 @@ url = (os.environ.get('APP_URL') or 'https://voice.mrctrading.com').rstrip('/')
 if not url.startswith('https://'):
     raise SystemExit('APP_URL must use HTTPS')
 revision = os.environ['GITHUB_SHA']
-for attempt in range(60):
+for attempt in range(18):
     try:
         request = urllib.request.Request(url + '/health?revision=' + revision, headers={'Cache-Control': 'no-cache'})
         with urllib.request.urlopen(request, timeout=15) as response:
@@ -22,7 +22,7 @@ for attempt in range(60):
             break
     except (OSError, ValueError, RuntimeError):
         pass
-    print(f'Waiting for cron activation ({attempt + 1}/60)...', flush=True)
+    print(f'Verifying activated release ({attempt + 1}/18)...', flush=True)
     time.sleep(10)
 else:
-    raise SystemExit('Deployment not activated. Check deploy-cron.log in cPanel; verify cron PHP path, extensions, and DB permissions.')
+    raise SystemExit('Live verification failed. Check deploy/activation.log and storage/logs/laravel.log in cPanel; verify web PHP extensions, HTTPS, and DB permissions.')
