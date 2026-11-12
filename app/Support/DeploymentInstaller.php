@@ -144,6 +144,8 @@ class DeploymentInstaller
             $this->command($kernel, 'migrate', ['--force' => true]);
             $this->stage = 'administrator';
             $this->command($kernel, 'app:install-admin');
+            $this->stage = 'workspace setup';
+            $this->command($kernel, 'app:prepare-platform');
             // Keep config uncached: no server secrets are copied into release artifacts.
             // HTTP requests load the shared .env and runtime storage via SHARED_ROOT.
             $this->stage = 'view cache';

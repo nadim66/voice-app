@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Tenant;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,6 +21,7 @@ class AdminTest extends TestCase
 
     public function test_only_administrators_can_access_the_panel(): void
     {
+        $tenant = Tenant::factory()->create();
         $panel = Filament::getPanel('admin');
         $user = User::factory()->create();
         $this->assertFalse($user->canAccessPanel($panel));
@@ -28,7 +30,7 @@ class AdminTest extends TestCase
         $user->is_admin = true;
         $user->save();
         $this->assertTrue($user->canAccessPanel($panel));
-        $this->actingAs($user)->get('/admin')->assertOk();
+        $this->actingAs($user)->get('/admin/'.$tenant->slug)->assertOk();
         $this->actingAs($user)->get('/admin/profile')->assertOk();
     }
 
